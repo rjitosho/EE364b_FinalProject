@@ -5,10 +5,10 @@ clear all;
 n = 2; N = 3; T = 30; D = 0.4; T_s = 0.1;
 
 % Define our cost matrices
-Q = eye(2*n, 2*n) * 100.0; % cost associated with the state
+Q = diag([.1 .1 0 0]) * 1.0; % cost associated with the state
 Qf = eye(2*n,2*n) * 10.0; % cost associated with the final state
-R = eye(n, n); % cost associated with the control effort 
-collision_scalar = 500.0;
+R = eye(n, n) * 0.1; % cost associated with the control effort 
+collision_scalar = 10.0;
 % Dynamics matrices
 A_d = [eye(n, n) T_s*eye(n,n); zeros(n,n) eye(n,n)];
 B_d = [T_s^2/2*eye(n,n); T_s*eye(n,n)];
@@ -25,8 +25,23 @@ p1final = [1,0, 0, 0]'; p2final = [1,-0.5, 0, 0]'; p3final = [1,-1, 0, 0]';
 cur_p1 = repmat(p1init,1,T)+(p1final-p1init)*[0:1/(T-1):1];
 cur_p2 = repmat(p2init,1,T)+(p2final-p2init)*[0:1/(T-1):1]; 
 cur_p3 = repmat(p3init,1,T)+(p3final-p3init)*[0:1/(T-1):1]; 
+[cur_p1, cur_p2, cur_p3, ~] = traj_opt_fcn(p1init(1:n, :), p2init(1:n, :), p3init(1:n, :), p1final(1:n, :), p2final(1:n, :), p3final(1:n, :), cur_p1(1:n, :), cur_p2(1:n, :), cur_p3(1:n, :), 10);
 
-iterations = 4;
+cur_p1(n+1:2*n,:) = [(cur_p1(1:n,2:T)-cur_p1(1:n,1:T-1))/T_s [0;0]]; 
+cur_p2(n+1:2*n,:) = [(cur_p2(1:n,2:T)-cur_p2(1:n,1:T-1))/T_s [0;0]]; 
+cur_p3(n+1:2*n,:) = [(cur_p3(1:n,2:T)-cur_p3(1:n,1:T-1))/T_s [0;0]]; 
+
+
+%function [p1_ret, p2_ret, p3_ret, costs] = traj_opt_fcn(p1init, p2init, p3init, p1final, p2final, p3final, cur_p1, cur_p2, cur_p3, iterations)
+
+% 
+% cur_p1 = randn(2*n, T); cur_p1(:, 1) = p1init; cur_p1(:, end) = p1final;
+% cur_p2 = randn(2*n, T); cur_p2(:, 1) = p2init; cur_p2(:, end) = p2final;
+% cur_p3 = randn(2*n, T); cur_p3(:, 1) = p3init; cur_p3(:, end) = p3final;
+
+
+
+iterations = 20;
 
 costs = zeros(1, iterations+1);
 costs(1) = norm(cur_p1(:, 2:end) - cur_p1(:, 1:end-1), 'fro') + norm(cur_p2(:, 2:end) - cur_p2(:, 1:end-1), 'fro') + norm(cur_p3(:, 2:end) - cur_p3(:, 1:end-1), 'fro');
@@ -44,8 +59,6 @@ for step = 1:iterations
         p2(:, 1) == p2init;
         p3(:, 1) == p3init;
 
-
-
         % Dynamics constraints
         for t = 1:T-1
             p1(:, t+1) == A_d * p1(:,t) + B_d * u1(:,t);
@@ -54,12 +67,9 @@ for step = 1:iterations
         end
         
         % Constraints on control
-        vec(u1) <= u_max;
-        vec(u2) <= u_max;
-        vec(u3) <= u_max;
-        vec(u1) >= u_min;
-        vec(u2) >= u_min;
-        vec(u3) >= u_min;
+        [u1 u2 u3] <= u_max;
+        [u1 u2 u3] >= u_min;
+      
         
         % Objective function
         
@@ -67,17 +77,20 @@ for step = 1:iterations
         cost_fcn = 0;
         for t = 1:T
             dif = cur_p1(1:n, t) - cur_p2(1:n, t);
-            cost_fcn = cost_fcn + collision_scalar * max(D - ((dif' * (p1(1:n, t) - cur_p1(1:n, t)) - dif' * (p2(1:n, t) - cur_p2(1:n, t)))/norm(dif, 2) + norm(dif)), 0);
+            %cost_fcn = cost_fcn + collision_scalar * max(D - ((dif' * (p1(1:n, t) - cur_p1(1:n, t)) - dif' * (p2(1:n, t) - cur_p2(1:n, t)))/norm(dif, 2) + norm(dif)), 0);
+            D - ((dif' * (p1(1:n, t) - cur_p1(1:n, t)) - dif' * (p2(1:n, t) - cur_p2(1:n, t)))/norm(dif, 2) + norm(dif)) <= 0;
         end
         % p2 and p3 collision
         for t = 1:T
             dif = cur_p2(1:n, t) - cur_p3(1:n, t);
-            cost_fcn = cost_fcn + collision_scalar * max(D - ((dif' * (p2(1:n, t) - cur_p2(1:n, t)) - dif' * (p3(1:n, t) - cur_p3(1:n, t)))/norm(dif, 2) + norm(dif)), 0);
+            % cost_fcn = cost_fcn + collision_scalar * max(D - ((dif' * (p2(1:n, t) - cur_p2(1:n, t)) - dif' * (p3(1:n, t) - cur_p3(1:n, t)))/norm(dif, 2) + norm(dif)), 0);
+            D - ((dif' * (p2(1:n, t) - cur_p2(1:n, t)) - dif' * (p3(1:n, t) - cur_p3(1:n, t)))/norm(dif, 2) + norm(dif)) <= 0;
         end
         % p1 and p3 collision
         for t = 1:T
             dif = cur_p1(1:n, t) - cur_p3(1:n, t);
-            cost_fcn = cost_fcn + collision_scalar * max(D - ((dif' * (p1(1:n, t) - cur_p1(1:n, t)) - dif' * (p3(1:n, t) - cur_p3(1:n, t)))/norm(dif, 2) + norm(dif)), 0);
+            % cost_fcn = cost_fcn + collision_scalar * max(D - ((dif' * (p1(1:n, t) - cur_p1(1:n, t)) - dif' * (p3(1:n, t) - cur_p3(1:n, t)))/norm(dif, 2) + norm(dif)), 0);
+            D - ((dif' * (p1(1:n, t) - cur_p1(1:n, t)) - dif' * (p3(1:n, t) - cur_p3(1:n, t)))/norm(dif, 2) + norm(dif)) <= 0;
         end
         
         % cost at each time step
@@ -102,6 +115,13 @@ for step = 1:iterations
     cur_p3 = p3;    
     costs(step+1) = cvx_optval;
 end
+
+% Plot the costs
+figure();
+plot(costs);
+title('Costs');
+xlabel('Iteration');
+ylabel('costs');
 
 % Visualize the Trajectories
 
