@@ -3,7 +3,7 @@ clear all;
 tic
 
 % Problem Definition
-n = 2; N = 3; T = 30; D = 0.4; T_s = 0.1;
+n = 2; N = 4; T = 30; D = 0.4; T_s = 0.1;
 
 % Define our cost matrices
 Q = diag([.1 .1 0 0]) * 1.0; % cost associated with the state
@@ -20,27 +20,28 @@ u_max = 2.0;
 u_min = -2.0;
 
 % Initial and final positions
-p1init = [-1,0, 0, 0]'; p2init = [-1,0.5, 0, 0]'; p3init = [-1,1, 0, 0]';
-p1final = [1,0, 0, 0]'; p2final = [1,-0.5, 0, 0]'; p3final = [1,-1, 0, 0]';
+p1init = [-1,0, 0, 0]'; p2init = [-1,0.5, 0, 0]'; p3init = [-1,1, 0, 0]'; p4init = [1,1, 0, 0]';
+p1final = [1,0, 0, 0]'; p2final = [1,-0.5, 0, 0]'; p3final = [1,-1, 0, 0]'; p4final = [-1,-1, 0, 0]';
 
 % Initial trajectory
-cur_P = zeros(n,T,N);
+cur_P = zeros(2*n,T,N);
 cur_P(:,:,1) = repmat(p1init,1,T)+(p1final-p1init)*[0:1/(T-1):1];
 cur_P(:,:,2) = repmat(p2init,1,T)+(p2final-p2init)*[0:1/(T-1):1]; 
 cur_P(:,:,3) = repmat(p3init,1,T)+(p3final-p3init)*[0:1/(T-1):1]; 
+cur_P(:,:,4) = repmat(p4init,1,T)+(p4final-p4init)*[0:1/(T-1):1]; 
+cur_P = cur_P(1:n,:,:);
 
 % Warm start trajectory
-Pinit = zeros(n,T,N);
-Pinit(:,:,1) = p1init(1:n, :);
-Pinit(:,:,2) = p2init(1:n, :);
-Pinit(:,:,3) = p3init(1:n, :);
+Pinit = [p1init(1:n, :) p2init(1:n, :) p3init(1:n, :) p4init(1:n, :)];
+Pfinal = [p1final(1:n, :) p2final(1:n, :) p3final(1:n, :) p4final(1:n, :)];
 
-Pfinal = zeros(n,T,N);
-Pfinal(:,:,1) =  p1final(1:n, :);
-Pfinal(:,:,2) =  p2final(1:n, :);
-Pfinal(:,:,3) =  p3final(1:n, :);
+[ret_P] = gen_traj_opt_fcn(Pinit, Pfinal, cur_P, 15);
 
-[ret_P] = gen_traj_opt_fcn(Pinit, Pfinal, cur_p1(1:n, :), cur_p2(1:n, :), cur_p3(1:n, :), 10, 4);
+p1 = ret_P(1:n,:,1);
+p2 = ret_P(1:n,:,2);
+p3 = ret_P(1:n,:,3);
+p4 = ret_P(1:n,:,4);
+
 % cur_p1(n+1:2*n,:) = [(cur_p1(1:n,2:T)-cur_p1(1:n,1:T-1))/T_s [0;0]]; 
 % cur_p2(n+1:2*n,:) = [(cur_p2(1:n,2:T)-cur_p2(1:n,1:T-1))/T_s [0;0]]; 
 % cur_p3(n+1:2*n,:) = [(cur_p3(1:n,2:T)-cur_p3(1:n,1:T-1))/T_s [0;0]]; 
@@ -129,11 +130,11 @@ Pfinal(:,:,3) =  p3final(1:n, :);
 toc
 
 % Plot the costs
-figure();
-plot(costs);
-title('Costs');
-xlabel('Iteration');
-ylabel('costs');
+% figure();
+% plot(costs);
+% title('Costs');
+% xlabel('Iteration');
+% ylabel('costs');
 
 % Visualize the Trajectories
 
@@ -146,19 +147,20 @@ ylabel('costs');
 p1 = p1(1:2, :);
 p2 = p2(1:2, :);
 p3 = p3(1:2, :);
+p4 = p4(1:2, :);
 
 [x,y,z] = cylinder(D/2,200);
 x = x(1,:); y = y(1,:);
 figure; cla; hold on; 
 axis([-1.5,1.5,-1.5,1.5]); axis square; 
+vehicle_colors = rand(3,N);
 for t = 1:T
-    cla;
-    plot(p1(1,:),p1(2,:),'bd');
-    plot(p2(1,:),p2(2,:),'rd');
-    plot(p3(1,:),p3(2,:),'kd');
-    plot(p1(1,t)+x,p1(2,t)+y,'b','linewidth',1.5);
-    plot(p2(1,t)+x,p2(2,t)+y,'r','linewidth',1.5);
-    plot(p3(1,t)+x,p3(2,t)+y,'k','linewidth',1.5);
+    cla;    
+    for i = 1:N
+        plot(P(1,:,i),P(2,:,i),'d','color',vehicle_colors(:,i));
+        plot(P(1,t,i)+x,P(2,t,i)+y,'b','linewidth',1.5);
+    end
+
     rectangle('Position',[-1,-1,2,2],'Linestyle','--');
     pause(0.2);
 end
