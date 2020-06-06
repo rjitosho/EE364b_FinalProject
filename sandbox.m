@@ -34,7 +34,7 @@ cur_P = cur_P(1:n,:,:);
 Pinit = [p1init(1:n, :) p2init(1:n, :) p3init(1:n, :)];
 Pfinal = [p1final(1:n, :) p2final(1:n, :) p3final(1:n, :)];
 
-[ret_P] = gen_traj_opt_fcn(Pinit, Pfinal, cur_P, 10);
+[ret_P] = gen_traj_opt_fcn(Pinit, Pfinal, cur_P, 15);
 
 p1 = ret_P(1:n,:,1);
 p2 = ret_P(1:n,:,2);
