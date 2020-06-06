@@ -1,6 +1,6 @@
-function [P_ret] = gen_traj_opt_fcn(Pinit, Pfinal, cur_P, iterations)
+function [P_ret] = gen_traj_opt_fcn(Pinit, Pfinal, cur_P, D, iterations)
 shape = size(cur_P);
-n = shape(1); N = shape(3); T = shape(2); D = 0.4;
+n = shape(1); N = shape(3); T = shape(2);
 
 costs = zeros(1, iterations+1);
 for i = 1:N
