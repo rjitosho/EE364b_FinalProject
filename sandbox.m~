@@ -3,7 +3,7 @@ clear all;
 tic
 
 % Problem Definition
-n = 2; N = 8; T = 30; D = 0.3; T_s = 0.1;
+n = 2; N = 4; T = 30; D = 0.4; T_s = 0.1;
 
 % Define our cost matrices
 Q = diag([.1 .1 0 0]) * 1.0; % cost associated with the state
@@ -31,9 +31,7 @@ for i = 1:N
     Pinit(:, i) = [cur_x; cur_y];
 end
 
-locations = 1:N;
-end_locations = randperm(N);
-Pfinal = Pinit(:, end_locations);
+l
 
 %Pinit = [p1init(1:n, :) p2init(1:n, :) p3init(1:n, :) p4init(1:n, :)];
 %Pfinal = [p1final(1:n, :) p2final(1:n, :) p3final(1:n, :) p4final(1:n, :)];
@@ -161,15 +159,13 @@ x = x(1,:); y = y(1,:);
 figure; cla; hold on; 
 axis([-1.5,1.5,-1.5,1.5]); axis square; 
 vehicle_colors = rand(3,N);
-for k = 1:100
-    for t = 1:T
-        cla;    
-        for i = 1:N
-            plot(P(1,:,i),P(2,:,i),'d','color',vehicle_colors(:,i));
-            plot(P(1,t,i)+x,P(2,t,i)+y,'color',vehicle_colors(:,i),'linewidth',1.5);
-        end
-
-        rectangle('Position',[-1,-1,2,2],'Linestyle','--');
-        pause(0.2);
+for t = 1:T
+    cla;    
+    for i = 1:N
+        plot(P(1,:,i),P(2,:,i),'d','color',vehicle_colors(:,i));
+        plot(P(1,t,i)+x,P(2,t,i)+y,'color',vehicle_colors(:,i),'linewidth',1.5);
     end
+
+    rectangle('Position',[-1,-1,2,2],'Linestyle','--');
+    pause(0.2);
 end

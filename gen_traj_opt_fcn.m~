@@ -4,7 +4,7 @@ n = shape(1); N = shape(3); T = shape(2); D = 0.4;
 
 costs = zeros(1, iterations+1);
 for i = 1:N
-    costs(1) = costs(1) + norm(cur_P(:, 2:end, i) - cur_P(:, 1:end-1,i), 'fro');
+    costs(1) = costs(1) + norm(cur_P(:, 2:end, i) - cur_P(:, 1:end-1,i), 'fro')
 end
 
 for step = 1:iterations
@@ -13,6 +13,7 @@ for step = 1:iterations
         variables P(n,T,N); 
         
         % initial and final constraint
+        size(P
         reshape(P(:,1,:),n,N) == Pinit; 
         reshape(P(:,end,:),n,N) == Pfinal;         
 
@@ -35,7 +36,7 @@ for step = 1:iterations
     cvx_end
     
     % update cur_P 
-    cur_P = P;
+    cur_P = P
     
     % update cost
     for i = 1:N
